@@ -1,0 +1,13 @@
+package com.example.lt_web2;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class LtWeb2ApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
