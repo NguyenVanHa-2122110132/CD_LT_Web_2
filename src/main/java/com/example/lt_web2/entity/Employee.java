@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "employees")
@@ -19,7 +20,7 @@ public class Employee {
     @NotBlank(message = "Họ tên không được để trống")
     @Size(min = 2, max = 50, message = "Họ tên phải từ 2 đến 50 ký tự")
     @Pattern(regexp = "^[\\p{L} ]+$", message = "Họ tên chỉ chứa chữ cái và khoảng trắng")
-    @Column(name = "full_name", nullable = false, length = 100)
+    @Column(name = "full_name", nullable = false, length = 50)
     private String fullName;
 
     @NotNull(message = "Ngày sinh không được để trống")
@@ -39,6 +40,17 @@ public class Employee {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @NotBlank(message = "Mật khẩu không được để trống")
+    @Column(nullable = false)
+    private String password;
+
+    @Column(length = 20)
+    private String role; // ADMIN, MANAGER, STAFF
+
+    @Pattern(regexp = "^\\d{6}$", message = "PIN phải gồm đúng 6 chữ số")
+    @Column(name = "pin_code", unique = true, length = 6)
+    private String pinCode;
+
     @Column(length = 50)
     private String position;
 
@@ -54,15 +66,31 @@ public class Employee {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    // ===================== RELATIONSHIP =====================
+
+    @OneToMany(mappedBy = "employee")
+    private List<Attendance> attendances;
+
+    @OneToMany(mappedBy = "employee")
+    private List<ShiftAssignment> shiftAssignments;
+
+    // ===================== AUTO CREATE =====================
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+
         if (this.startDate == null) {
             this.startDate = LocalDate.now();
         }
+
+        if (this.role == null) {
+            this.role = "STAFF";
+        }
     }
 
-    // Getters & Setters
+    // ===================== GETTER SETTER =====================
+
     public Integer getId() {
         return id;
     }
@@ -119,6 +147,30 @@ public class Employee {
         this.email = email;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getPinCode() {
+        return pinCode;
+    }
+
+    public void setPinCode(String pinCode) {
+        this.pinCode = pinCode;
+    }
+
     public String getPosition() {
         return position;
     }
@@ -155,7 +207,19 @@ public class Employee {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public List<Attendance> getAttendances() {
+        return attendances;
+    }
+
+    public void setAttendances(List<Attendance> attendances) {
+        this.attendances = attendances;
+    }
+
+    public List<ShiftAssignment> getShiftAssignments() {
+        return shiftAssignments;
+    }
+
+    public void setShiftAssignments(List<ShiftAssignment> shiftAssignments) {
+        this.shiftAssignments = shiftAssignments;
     }
 }

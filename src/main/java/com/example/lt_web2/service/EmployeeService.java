@@ -21,7 +21,6 @@ public class EmployeeService {
     }
 
     // ===================== AUTO-GEN MÃ NHÂN VIÊN =====================
-    // Format: NV + YYMM + STT 3 số (VD: NV2606001)
     public String generateEmployeeCode() {
         String yymm = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMM"));
         String prefix = "NV" + yymm;
@@ -57,14 +56,25 @@ public class EmployeeService {
         // Kiểm tra tuổi >= 18
         if (employee.getDateOfBirth() != null) {
             int age = Period.between(employee.getDateOfBirth(), LocalDate.now()).getYears();
-            if (age < 18) {
+            if (age < 18)
                 return "Nhân viên chưa đủ 18 tuổi";
-            }
         } else {
             return "Ngày sinh không được để trống";
         }
 
-        // Kiểm tra ngày vào làm không được là ngày quá khứ
+        // Kiểm tra giới tính
+        List<String> validGenders = List.of("Nam", "Nữ", "Khác");
+        if (employee.getGender() == null || !validGenders.contains(employee.getGender())) {
+            return "Giới tính không hợp lệ (Nam / Nữ / Khác)";
+        }
+
+        // Kiểm tra chức vụ
+        List<String> validPositions = List.of("Admin", "Quản lý cửa hàng", "Nhân viên bán hàng");
+        if (employee.getPosition() == null || !validPositions.contains(employee.getPosition())) {
+            return "Chức vụ không hợp lệ";
+        }
+
+        // Ngày vào làm không được là ngày quá khứ
         if (employee.getStartDate() != null && employee.getStartDate().isBefore(LocalDate.now())) {
             return "Ngày vào làm không được là ngày trong quá khứ";
         }
@@ -100,9 +110,20 @@ public class EmployeeService {
         // Kiểm tra tuổi >= 18
         if (employee.getDateOfBirth() != null) {
             int age = Period.between(employee.getDateOfBirth(), LocalDate.now()).getYears();
-            if (age < 18) {
+            if (age < 18)
                 return "Nhân viên chưa đủ 18 tuổi";
-            }
+        }
+
+        // Kiểm tra giới tính
+        List<String> validGenders = List.of("Nam", "Nữ", "Khác");
+        if (employee.getGender() != null && !validGenders.contains(employee.getGender())) {
+            return "Giới tính không hợp lệ (Nam / Nữ / Khác)";
+        }
+
+        // Kiểm tra chức vụ
+        List<String> validPositions = List.of("Admin", "Quản lý cửa hàng", "Nhân viên bán hàng");
+        if (employee.getPosition() != null && !validPositions.contains(employee.getPosition())) {
+            return "Chức vụ không hợp lệ";
         }
 
         // Kiểm tra trùng SĐT với người khác
@@ -110,8 +131,7 @@ public class EmployeeService {
             return "Số điện thoại đã được sử dụng bởi nhân viên khác";
         }
 
-        // Cập nhật các trường được phép sửa
-        // employeeCode và email KHÔNG được sửa (read-only theo FR-EMP-002)
+        // employeeCode và email KHÔNG được sửa (read-only)
         emp.setFullName(employee.getFullName());
         emp.setDateOfBirth(employee.getDateOfBirth());
         emp.setGender(employee.getGender());
@@ -132,8 +152,16 @@ public class EmployeeService {
 
         Employee emp = existing.get();
 
-        // TODO: Sau khi có bảng orders và attendances thì check ở đây
-        // Hiện tại chưa có orders → soft delete trực tiếp
+        // TODO: Uncomment sau khi có bảng orders và attendances
+        // boolean hasHistory = orderRepository.existsByEmployeeId(id)
+        // || attendanceRepository.existsByEmployeeId(id);
+        // if (hasHistory) {
+        // emp.setIsActive(false);
+        // employeeRepository.save(emp);
+        // return "Không thể xóa nhân viên đã có lịch sử bán hàng. Hệ thống tự động
+        // chuyển trạng thái tài khoản sang 'Ngừng hoạt động'!";
+        // }
+
         emp.setIsDeleted(true);
         emp.setIsActive(false);
         employeeRepository.save(emp);
