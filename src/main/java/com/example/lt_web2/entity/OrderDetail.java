@@ -16,16 +16,16 @@ public class OrderDetail {
     private Order order;
 
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @JoinColumn(name = "variant_id", nullable = false)
+    private ProductVariant productVariant;
 
     @Column(nullable = false)
     private Integer quantity;
 
+    // Đơn giá thực bán (sau khi áp khuyến mãi nếu có)
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal price;
 
-    // Getters & Setters
     public Integer getId() {
         return id;
     }
@@ -42,12 +42,12 @@ public class OrderDetail {
         this.order = order;
     }
 
-    public Product getProduct() {
-        return product;
+    public ProductVariant getProductVariant() {
+        return productVariant;
     }
 
-    public void setProduct(Product product) {
-        this.product = product;
+    public void setProductVariant(ProductVariant productVariant) {
+        this.productVariant = productVariant;
     }
 
     public Integer getQuantity() {

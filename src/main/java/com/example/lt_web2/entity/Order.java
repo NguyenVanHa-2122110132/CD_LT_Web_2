@@ -35,12 +35,23 @@ public class Order {
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 
+    // ===== Field mới thêm =====
+    @Column(name = "discount_amount", precision = 18, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "voucher_code", length = 50)
+    private String voucherCode;
+
+    @Column(name = "printed_at")
+    private LocalDateTime printedAt;
+    // ===========================
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Getters & Setters
+    // Getters & Setters cũ
     public Integer getId() {
         return id;
     }
@@ -103,5 +114,30 @@ public class Order {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    // ===== Getters & Setters mới thêm =====
+    public BigDecimal getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    public String getVoucherCode() {
+        return voucherCode;
+    }
+
+    public void setVoucherCode(String voucherCode) {
+        this.voucherCode = voucherCode;
+    }
+
+    public LocalDateTime getPrintedAt() {
+        return printedAt;
+    }
+
+    public void setPrintedAt(LocalDateTime printedAt) {
+        this.printedAt = printedAt;
     }
 }

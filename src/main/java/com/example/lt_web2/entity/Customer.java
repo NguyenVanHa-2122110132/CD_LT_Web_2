@@ -40,6 +40,17 @@ public class Customer {
         this.createdAt = LocalDateTime.now();
     }
 
+    @Column(name = "birth_date")
+    private java.time.LocalDate birthDate;
+
+    public java.time.LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(java.time.LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
     // Getters & Setters
     public Integer getId() {
         return id;
