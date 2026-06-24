@@ -34,10 +34,15 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
             "LOWER(e.employeeCode) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<Employee> searchByKeyword(@Param("keyword") String keyword);
 
-    // Đếm đơn hàng để check trước khi xóa (dùng sau khi có bảng orders)
-    // boolean existsOrdersByEmployeeId(Integer employeeId);
-
     // Lấy mã NV mới nhất theo format NV + YYMM
     @Query("SELECT e.employeeCode FROM Employee e WHERE e.employeeCode LIKE :prefix ORDER BY e.employeeCode DESC")
     List<String> findLatestCodeByPrefix(@Param("prefix") String prefix);
+
+    // [FIX FR-EMP-003] Kiểm tra nhân viên đã có đơn hàng chưa
+    @Query("SELECT COUNT(o) > 0 FROM Order o WHERE o.employee.id = :employeeId")
+    boolean existsOrdersByEmployeeId(@Param("employeeId") Integer employeeId);
+
+    // [FIX FR-EMP-003] Kiểm tra nhân viên đã có chấm công chưa
+    @Query("SELECT COUNT(a) > 0 FROM Attendance a WHERE a.employee.id = :employeeId")
+    boolean existsAttendanceByEmployeeId(@Param("employeeId") Integer employeeId);
 }

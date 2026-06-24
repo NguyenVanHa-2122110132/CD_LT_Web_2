@@ -56,6 +56,12 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- [FIX] Spring Security Crypto: chỉ lấy BCrypt, không bật Security filter -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
