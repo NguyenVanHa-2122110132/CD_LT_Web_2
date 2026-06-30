@@ -13,6 +13,12 @@ public class CustomerController {
     @Autowired
     private CustomerService customerService;
 
+    // Lấy danh sách toàn bộ khách hàng (dùng cho trang quản lý frontend)
+    @GetMapping
+    public List<CustomerResponse> getAllCustomers() {
+        return customerService.getAllCustomers();
+    }
+
     // FR-CUS-001: Thêm nhanh khách hàng
     @PostMapping("/quick-add")
     public CustomerResponse quickAdd(@RequestBody CustomerCreateRequest req) {

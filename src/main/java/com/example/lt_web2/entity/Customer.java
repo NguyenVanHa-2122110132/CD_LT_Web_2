@@ -14,7 +14,7 @@ public class Customer {
     @Column(name = "customer_code", unique = true, length = 20)
     private String customerCode;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 50, columnDefinition = "nvarchar(50)")
     private String fullName;
 
     @Column(nullable = false, unique = true, length = 15)
@@ -23,7 +23,7 @@ public class Customer {
     @Column(length = 100)
     private String email;
 
-    @Column(length = 255)
+    @Column(length = 255, columnDefinition = "nvarchar(255)")
     private String address;
 
     @Column(name = "total_points")

@@ -32,6 +32,12 @@ public class ReturnOrder {
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 
+    @Column(name = "difference_amount", precision = 18, scale = 2)
+    private java.math.BigDecimal differenceAmount = java.math.BigDecimal.ZERO;
+
+    @Column(name = "refund_voucher_code", length = 50)
+    private String refundVoucherCode;
+
     @OneToMany(mappedBy = "returnOrder", cascade = CascadeType.ALL)
     private List<ReturnOrderDetail> returnOrderDetails;
 
@@ -103,5 +109,21 @@ public class ReturnOrder {
 
     public void setReturnOrderDetails(List<ReturnOrderDetail> returnOrderDetails) {
         this.returnOrderDetails = returnOrderDetails;
+    }
+
+    public java.math.BigDecimal getDifferenceAmount() {
+        return differenceAmount;
+    }
+
+    public void setDifferenceAmount(java.math.BigDecimal differenceAmount) {
+        this.differenceAmount = differenceAmount;
+    }
+
+    public String getRefundVoucherCode() {
+        return refundVoucherCode;
+    }
+
+    public void setRefundVoucherCode(String refundVoucherCode) {
+        this.refundVoucherCode = refundVoucherCode;
     }
 }

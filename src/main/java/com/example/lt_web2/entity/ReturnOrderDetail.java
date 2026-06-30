@@ -1,5 +1,7 @@
 package com.example.lt_web2.entity;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -26,6 +28,27 @@ public class ReturnOrderDetail {
 
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
+    @Column(name = "difference_amount", precision = 18, scale = 2)
+    private BigDecimal differenceAmount = BigDecimal.ZERO; // dương = thu thêm, âm = hoàn lại
+
+    @Column(name = "refund_voucher_code", length = 50)
+    private String refundVoucherCode; // mã voucher hoàn tiền (nếu có)
+
+    public BigDecimal getDifferenceAmount() {
+        return differenceAmount;
+    }
+
+    public void setDifferenceAmount(BigDecimal differenceAmount) {
+        this.differenceAmount = differenceAmount;
+    }
+
+    public String getRefundVoucherCode() {
+        return refundVoucherCode;
+    }
+
+    public void setRefundVoucherCode(String refundVoucherCode) {
+        this.refundVoucherCode = refundVoucherCode;
+    }
 
     // Constructor
     public ReturnOrderDetail() {

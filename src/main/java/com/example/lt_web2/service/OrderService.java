@@ -36,7 +36,8 @@ public class OrderService {
     private EmployeeRepository employeeRepository;
     @Autowired
     private CustomerService customerService;
-
+    @Autowired
+    private ComboPolicyRepository comboPolicyRepository;
     private static final int CANCEL_TIME_LIMIT_MINUTES = 30; // BR-006
 
     // ====== FR-ORD-001: Tạo đơn hàng tại quầy ======
@@ -112,13 +113,13 @@ public class OrderService {
             totalAmount = totalAmount.add(actualPrice.multiply(BigDecimal.valueOf(item.getQuantity())));
         }
 
-        // Áp voucher nếu có (đơn giản: voucher giảm theo số tiền cố định/percent đã có
-        // sẵn ở bảng vouchers)
-        BigDecimal discountAmount = BigDecimal.ZERO;
+        // FR-PRM-003: Tự động phát hiện và áp combo theo danh mục (gộp dòng, trừ tiền
+        // không cần chọn tay)
+        BigDecimal discountAmount = calculateComboDiscount(savedDetails);
         // Lưu ý: voucher tích điểm (FR-CUS-005) xử lý riêng ở
         // CustomerService.redeemPoints,
-        // ở đây chỉ áp mã voucher nhập tay nếu bạn có bảng vouchers độc lập — để đơn
-        // giản, bỏ qua nếu chưa cần.
+        // việc áp mã voucher nhập tay (nếu có bảng vouchers độc lập) có thể cộng thêm
+        // vào discountAmount ở đây khi cần.
 
         order.setTotalAmount(totalAmount);
         order.setDiscountAmount(discountAmount);
@@ -238,5 +239,61 @@ public class OrderService {
 
         order.setStatus("CANCELLED");
         orderRepository.save(order);
+    }
+
+    // ====== FR-PRM-003: Tính tiền giảm từ Combo (gộp theo danh mục, đạt đủ số
+    // lượng -> áp giá cố định) ======
+    private BigDecimal calculateComboDiscount(List<OrderDetail> details) {
+
+        BigDecimal totalComboDiscount = BigDecimal.ZERO;
+
+        // Gom nhóm các dòng sản phẩm theo category
+        java.util.Map<Integer, List<OrderDetail>> groupedByCategory = new java.util.HashMap<>();
+        for (OrderDetail d : details) {
+            Category category = d.getProductVariant().getProduct().getCategory();
+            if (category == null)
+                continue;
+            groupedByCategory.computeIfAbsent(category.getId(), k -> new ArrayList<>()).add(d);
+        }
+
+        for (java.util.Map.Entry<Integer, List<OrderDetail>> entry : groupedByCategory.entrySet()) {
+            Integer categoryId = entry.getKey();
+            List<OrderDetail> itemsInCategory = entry.getValue();
+
+            ComboPolicy combo = comboPolicyRepository
+                    .findByCategoryIdAndIsActiveTrueAndIsDeletedFalse(categoryId)
+                    .orElse(null);
+            if (combo == null)
+                continue;
+
+            // Tổng số lượng sản phẩm trong danh mục này có trong giỏ
+            int totalQty = itemsInCategory.stream().mapToInt(OrderDetail::getQuantity).sum();
+            int comboSets = totalQty / combo.getRequiredQuantity(); // số combo trọn vẹn đạt được
+            if (comboSets <= 0)
+                continue;
+
+            // Tổng tiền gốc của số lượng sản phẩm thuộc các combo này
+            List<BigDecimal> unitPrices = new ArrayList<>();
+            for (OrderDetail d : itemsInCategory) {
+                for (int i = 0; i < d.getQuantity(); i++) {
+                    unitPrices.add(d.getPrice());
+                }
+            }
+            unitPrices.sort(java.util.Collections.reverseOrder()); // ưu tiên giữ giá cao, giảm giá thấp trước
+
+            int itemsCoveredByCombo = comboSets * combo.getRequiredQuantity();
+            BigDecimal originalTotalForCombo = unitPrices.stream()
+                    .limit(itemsCoveredByCombo)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal comboFixedTotal = combo.getFixedPrice().multiply(BigDecimal.valueOf(comboSets));
+            BigDecimal discountForThisCombo = originalTotalForCombo.subtract(comboFixedTotal);
+
+            if (discountForThisCombo.compareTo(BigDecimal.ZERO) > 0) {
+                totalComboDiscount = totalComboDiscount.add(discountForThisCombo);
+            }
+        }
+
+        return totalComboDiscount;
     }
 }

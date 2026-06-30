@@ -11,7 +11,7 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/brands")
-@CrossOrigin(origins = "*")
+
 public class BrandController {
 
     private final BrandRepository brandRepository;

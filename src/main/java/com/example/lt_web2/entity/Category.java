@@ -11,10 +11,10 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, columnDefinition = "nvarchar(100)")
     private String name;
 
-    @Column(length = 255)
+    @Column(length = 255, columnDefinition = "nvarchar(255)")
     private String description;
 
     @Column(name = "is_deleted")

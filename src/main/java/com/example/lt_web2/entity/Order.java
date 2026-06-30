@@ -34,6 +34,9 @@ public class Order {
 
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
+    @ManyToOne
+    @JoinColumn(name = "branch_id")
+    private Branch branch;
 
     // ===== Field mới thêm =====
     @Column(name = "discount_amount", precision = 18, scale = 2)
@@ -139,5 +142,13 @@ public class Order {
 
     public void setPrintedAt(LocalDateTime printedAt) {
         this.printedAt = printedAt;
+    }
+
+    public Branch getBranch() {
+        return branch;
+    }
+
+    public void setBranch(Branch branch) {
+        this.branch = branch;
     }
 }

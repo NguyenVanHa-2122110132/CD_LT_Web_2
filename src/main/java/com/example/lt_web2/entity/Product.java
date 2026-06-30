@@ -43,6 +43,7 @@ public class Product {
 
     // Quan hệ với biến thể
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("product")
     private List<ProductVariant> variants;
 
     @Column(name = "created_at", updatable = false)

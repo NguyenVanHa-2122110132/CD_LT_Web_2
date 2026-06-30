@@ -110,8 +110,8 @@ public class CustomerService {
         List<OrderDetail> details = orderDetailRepository.findByOrderId(order.getId());
 
         BigDecimal fullPriceTotal = details.stream()
-                .filter(d -> d.getProduct() != null
-                        && d.getPrice().compareTo(d.getProduct().getPrice()) == 0)
+                .filter(d -> d.getProductVariant() != null
+                        && d.getPrice().compareTo(d.getProductVariant().getSalePrice()) == 0)
                 .map(d -> d.getPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -132,6 +132,14 @@ public class CustomerService {
         history.setType("EARN");
         history.setDescription("Tích điểm từ đơn hàng " + order.getOrderCode());
         pointHistoryRepository.save(history);
+    }
+
+    // Lấy danh sách toàn bộ khách hàng (dùng cho trang quản lý frontend)
+    public List<CustomerResponse> getAllCustomers() {
+        return customerRepository.findAll().stream()
+                .filter(c -> !c.getIsDeleted())
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     // FR-CUS-005: Đổi điểm lấy giảm giá
