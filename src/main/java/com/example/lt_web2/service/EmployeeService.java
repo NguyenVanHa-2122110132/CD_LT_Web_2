@@ -11,17 +11,89 @@ import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder; // [FIX #1] Inject BCrypt
+    private static final Pattern NAME_PATTERN = Pattern.compile("^[\\p{L} ]{2,50}$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^(03|05|07|08|09)\\d{8}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w.+\\-]+@[\\w\\-]+\\.[a-zA-Z]{2,}$");
+    private static final Pattern PIN_PATTERN = Pattern.compile("^\\d{6}$");
+    private static final List<String> VALID_GENDERS = List.of("Nam", "Nữ", "Khác");
+    private static final List<String> VALID_POSITIONS = List.of("Admin", "Quản lý cửa hàng", "Nhân viên bán hàng");
+    private static final List<String> VALID_ROLES = List.of("ADMIN", "MANAGER", "STAFF");
 
     public EmployeeService(EmployeeRepository employeeRepository,
             PasswordEncoder passwordEncoder) {
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    private String validateEmployeeInput(Employee employee, Integer currentId, boolean requireEmail) {
+        if (employee.getFullName() == null || !NAME_PATTERN.matcher(employee.getFullName().trim()).matches()) {
+            return "Họ tên chỉ chứa chữ cái và khoảng trắng, độ dài từ 2 - 50 ký tự";
+        }
+        if (employee.getDateOfBirth() == null) {
+            return "Ngày sinh không được để trống";
+        }
+        int age = Period.between(employee.getDateOfBirth(), LocalDate.now()).getYears();
+        if (age < 18) {
+            return "Nhân viên chưa đủ 18 tuổi";
+        }
+        if (employee.getGender() == null || !VALID_GENDERS.contains(employee.getGender())) {
+            return "Giới tính không hợp lệ (Nam / Nữ / Khác)";
+        }
+        if (employee.getPhoneNumber() == null || !PHONE_PATTERN.matcher(employee.getPhoneNumber()).matches()) {
+            return "Số điện thoại không hợp lệ";
+        }
+        if (employee.getPosition() == null || !VALID_POSITIONS.contains(employee.getPosition())) {
+            return "Chức vụ không hợp lệ (Admin / Quản lý cửa hàng / Nhân viên bán hàng)";
+        }
+        if (employee.getStartDate() == null) {
+            return "Ngày vào làm không được để trống";
+        }
+        if (employee.getStartDate().isAfter(LocalDate.now())) {
+            return "Ngày vào làm không được là ngày trong tương lai";
+        }
+        if (requireEmail || (employee.getEmail() != null && !employee.getEmail().isBlank())) {
+            if (employee.getEmail() == null || !EMAIL_PATTERN.matcher(employee.getEmail()).matches()) {
+                return "Email không đúng định dạng";
+            }
+        }
+        if (employee.getRole() != null && !employee.getRole().isBlank()
+                && !VALID_ROLES.contains(employee.getRole())) {
+            return "Vai trò không hợp lệ (ADMIN / MANAGER / STAFF)";
+        }
+        if (employee.getPinCode() != null && !employee.getPinCode().isBlank()
+                && !PIN_PATTERN.matcher(employee.getPinCode()).matches()) {
+            return "PIN phải gồm đúng 6 chữ số";
+        }
+        if (employee.getPinCode() != null && !employee.getPinCode().isBlank()) {
+            boolean pinExists = currentId == null
+                    ? employeeRepository.existsByPinCode(employee.getPinCode())
+                    : employeeRepository.existsByPinCodeAndIdNot(employee.getPinCode(), currentId);
+            if (pinExists) {
+                return "PIN đã được sử dụng bởi nhân viên khác";
+            }
+        }
+        return null;
+    }
+
+    private void normalizeEmployee(Employee employee) {
+        employee.setFullName(employee.getFullName().trim());
+        if (employee.getEmail() != null) {
+            employee.setEmail(employee.getEmail().trim().toLowerCase());
+        }
+        if (employee.getRole() == null || employee.getRole().isBlank()) {
+            employee.setRole(switch (employee.getPosition()) {
+                case "Admin" -> "ADMIN";
+                case "Quản lý cửa hàng" -> "MANAGER";
+                default -> "STAFF";
+            });
+        }
     }
 
     // ===================== AUTO-GEN MÃ NHÂN VIÊN =====================
@@ -58,6 +130,12 @@ public class EmployeeService {
     // ===================== THÊM MỚI — FR-EMP-001 =====================
     public String createEmployee(Employee employee) {
 
+        String validationError = validateEmployeeInput(employee, null, true);
+        if (validationError != null) {
+            return validationError;
+        }
+        normalizeEmployee(employee);
+
         // Kiểm tra tuổi >= 18
         if (employee.getDateOfBirth() == null) {
             return "Ngày sinh không được để trống";
@@ -79,12 +157,12 @@ public class EmployeeService {
             return "Chức vụ không hợp lệ (Admin / Quản lý cửa hàng / Nhân viên bán hàng)";
         }
 
-        // [FIX #1b] Ngày vào làm: bắt buộc có, không được là ngày quá khứ
+        // [FIX #1b] Ngày vào làm: bắt buộc có, không được là ngày trong tương lai
         if (employee.getStartDate() == null) {
             return "Ngày vào làm không được để trống";
         }
-        if (employee.getStartDate().isBefore(LocalDate.now())) {
-            return "Ngày vào làm không được là ngày trong quá khứ";
+        if (employee.getStartDate().isAfter(LocalDate.now())) {
+            return "Ngày vào làm không được là ngày trong tương lai";
         }
 
         // Kiểm tra trùng SĐT
@@ -121,6 +199,12 @@ public class EmployeeService {
 
         Employee emp = existing.get();
 
+        String validationError = validateEmployeeInput(employee, id, false);
+        if (validationError != null) {
+            return validationError;
+        }
+        normalizeEmployee(employee);
+
         // Kiểm tra tuổi >= 18
         if (employee.getDateOfBirth() == null) {
             return "Ngày sinh không được để trống";
@@ -147,6 +231,11 @@ public class EmployeeService {
             return "Số điện thoại đã được sử dụng bởi nhân viên khác";
         }
 
+        if (employee.getEmail() != null && !employee.getEmail().isBlank()
+                && employeeRepository.existsByEmailAndIdNot(employee.getEmail(), id)) {
+            return "Email đã tồn tại trên hệ thống";
+        }
+
         // [FR-EMP-002] employeeCode và email KHÔNG được sửa (read-only)
         emp.setFullName(employee.getFullName());
         emp.setDateOfBirth(employee.getDateOfBirth());
@@ -154,6 +243,8 @@ public class EmployeeService {
         emp.setPhoneNumber(employee.getPhoneNumber());
         emp.setPosition(employee.getPosition());
         emp.setStartDate(employee.getStartDate());
+        emp.setRole(employee.getRole());
+        emp.setPinCode(employee.getPinCode());
 
         employeeRepository.save(emp);
         return "Cập nhật thông tin nhân viên thành công!";

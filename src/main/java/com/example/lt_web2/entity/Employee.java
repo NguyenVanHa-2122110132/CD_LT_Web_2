@@ -1,5 +1,6 @@
 package com.example.lt_web2.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
@@ -41,6 +42,7 @@ public class Employee {
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(nullable = false)
     private String password;
 

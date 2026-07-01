@@ -25,6 +25,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     // Kiểm tra trùng SĐT khi sửa (bỏ qua chính nhân viên đó)
     boolean existsByPhoneNumberAndIdNot(String phoneNumber, Integer id);
 
+    boolean existsByEmailAndIdNot(String email, Integer id);
+
+    boolean existsByPinCode(String pinCode);
+
+    boolean existsByPinCodeAndIdNot(String pinCode, Integer id);
+
     // Lấy danh sách chưa bị xóa
     List<Employee> findByIsDeletedFalse();
 
